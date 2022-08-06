@@ -23,8 +23,8 @@ regions = []
 current_region = []
 
 def gen_obstacles():
-	n_points = 200
-	alpha = 40.
+	n_points = 80
+	alpha = 15.
 
 	points = np.random.random(size=(n_points, 2))
 	gen = alphashape.alphasimplices(points)
@@ -268,11 +268,12 @@ def optim():
 def onmousepress(event):
 	global A, b, C, d
 	global seed_point, tris, orig_tris
-	if event.inaxes:
-		seed_point = np.array([event.xdata, event.ydata])
-		gen_boundaries(seed_point)
-		optim()
-		draw()
+	if seed_point is None:
+		if event.inaxes:
+			seed_point = np.array([event.xdata, event.ydata])
+			gen_boundaries(seed_point)
+			optim()
+			draw()
 
 orig_tris = gen_obstacles()
 tris = orig_tris.copy()
