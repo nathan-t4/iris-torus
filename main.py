@@ -117,9 +117,10 @@ def draw():
 			intercept = b[i]
 			xx = np.linspace(*limits[0])
 			yy = (-w[0] / w[1]) * xx + (intercept / w[1])
-			ax.plot(xx, yy, color="blue")
+			# ax.plot(xx, yy, color="blue")
 		draw_intersection(A, b, ds[-1])
-	for region in regions:
+	for idx, region in enumerate(regions):
+		color = plt.get_cmap("Dark2")(float(idx) / 8.)
 		arrs = [
 			np.array([0, 0]),
 			np.array([1, 0]),
@@ -129,9 +130,9 @@ def draw():
 		]
 		for arr in arrs:
 			temp = region + arr
-			plt.plot(temp[:,0], temp[:,1], color="green", alpha=0.5)
-			plt.plot(temp[[0,-1],0], temp[[0,-1],1], color="green", alpha=0.5)
-			ax.add_patch(Polygon(temp, color="green", alpha=0.25))
+			plt.plot(temp[:,0], temp[:,1], color=color, alpha=0.5)
+			plt.plot(temp[[0,-1],0], temp[[0,-1],1], color=color, alpha=0.5)
+			ax.add_patch(Polygon(temp, color=color, alpha=0.25))
 	plt.draw()
 
 def SeparatingHyperplanes(C, d, O):
