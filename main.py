@@ -17,6 +17,8 @@ tolerance = 0.00001
 limits = [[0, 1], [0, 1]]
 max_iters = 10
 
+cvx_range = 0.25
+
 regions = []
 current_region = []
 
@@ -32,18 +34,45 @@ def gen_obstacles():
 		if r < 1/alpha:
 			tris.append(points[simplex])
 
-	tris.append(np.array([[0, 0], [1, 0], [0.5, -0.5]]))
-	tris.append(np.array([[1, 0], [1, 1], [1.5, 0.5]]))
-	tris.append(np.array([[1, 1], [0, 1], [0.5, 1.5]]))
-	tris.append(np.array([[0, 1], [0, 0], [-0.5, 0.5]]))
+	for i in range(len(tris)):
+		tris.append(tris[i] + np.array([1, 0]))
+		tris.append(tris[i] + np.array([-1, 0]))
+		tris.append(tris[i] + np.array([0, 1]))
+		tris.append(tris[i] + np.array([0, -1]))
+		# tris.append(tris[i] + np.array([1, 1]))
+		# tris.append(tris[i] + np.array([1, -1]))
+		# tris.append(tris[i] + np.array([-1, 1]))
+		# tris.append(tris[i] + np.array([-1, -1]))
 
 	return tris
+
+def gen_boundaries(seed_point):
+	global tris
+	tris = orig_tris.copy()
+
+	left = np.array([[0, -0.5], [0, 0.5], [-0.5, 0]]) + seed_point + np.array([-1 * cvx_range, 0])
+	right = np.array([[0, -0.5], [0, 0.5], [0.5, 0]]) + seed_point + np.array([cvx_range, 0])
+	bottom = np.array([[-0.5, 0], [0.5, 0], [0, -0.5]]) + seed_point + np.array([0, -1 * cvx_range])
+	top = np.array([[-0.5, 0], [0.5, 0], [0, 0.5]]) + seed_point + np.array([0, cvx_range])
+
+	tris.append(left)
+	tris.append(right)
+	tris.append(top)
+	tris.append(bottom)
 
 def draw_ellipse(C, d):
 	ts = np.linspace(0, 2*np.pi)
 	points = np.array([np.cos(ts), np.sin(ts)])
 	points = C @ points + d.reshape(-1,1)
-	ax.plot(*(points))
+	ax.plot(*(points), color="blue")
+	arrs = [
+		np.array([1, 0]),
+		np.array([-1, 0]),
+		np.array([0, -1]),
+		np.array([0, 1])
+	]
+	for arr in arrs:
+		ax.plot(*(points + arr.reshape(-1, 1)), color="blue")
 
 def draw_intersection(A, b, d):
 	global current_region
@@ -54,7 +83,15 @@ def draw_intersection(A, b, d):
 	thetas = np.arctan2(centered_points[:,1], centered_points[:,0])
 	idxs = np.argsort(thetas)
 	current_region = points[idxs]
-	ax.add_patch(Polygon(current_region, color="blue", alpha=0.25))
+	arrs = [
+		np.array([0, 0]),
+		np.array([1, 0]),
+		np.array([-1, 0]),
+		np.array([0, -1]),
+		np.array([0, 1])
+	]
+	for arr in arrs:
+		ax.add_patch(Polygon(current_region + arr, color="blue", alpha=0.25))
 
 def draw():
 	global seed_point, As, bs, Cs, ds, regions
@@ -62,8 +99,10 @@ def draw():
 	ax.set_xlim(limits[0])
 	ax.set_ylim(limits[1])
 	ax.set_aspect("equal")
-	for tri in tris:
+	for tri in orig_tris:
 		ax.add_patch(Polygon(tri, color="red"))
+	for i in range(-1, -5, -1):
+		ax.add_patch(Polygon(tris[i], color="red", alpha=0.25))
 	if not (seed_point is None):
 		ax.scatter([seed_point[0]], [seed_point[1]])
 	if len(Cs) > 0:
@@ -81,9 +120,18 @@ def draw():
 			ax.plot(xx, yy, color="blue")
 		draw_intersection(A, b, ds[-1])
 	for region in regions:
-		plt.plot(region[:,0], region[:,1], color="green", alpha=0.5)
-		plt.plot(region[[0,-1],0], region[[0,-1],1], color="green", alpha=0.5)
-		ax.add_patch(Polygon(region, color="green", alpha=0.25))
+		arrs = [
+			np.array([0, 0]),
+			np.array([1, 0]),
+			np.array([-1, 0]),
+			np.array([0, -1]),
+			np.array([0, 1])
+		]
+		for arr in arrs:
+			temp = region + arr
+			plt.plot(temp[:,0], temp[:,1], color="green", alpha=0.5)
+			plt.plot(temp[[0,-1],0], temp[[0,-1],1], color="green", alpha=0.5)
+			ax.add_patch(Polygon(temp, color="green", alpha=0.25))
 	plt.draw()
 
 def SeparatingHyperplanes(C, d, O):
@@ -152,7 +200,7 @@ def InscribedEllipsoid(A, b):
 	return C.value, d.value
 
 def optim():
-	global As, bs, Cs, ds, seed_point, regions, current_region
+	global As, bs, Cs, ds, seed_point, regions, current_region, tris
 	As = []
 	bs = []
 	Cs = []
@@ -198,6 +246,7 @@ def optim():
 	bs = []
 	Cs = []
 	ds = []
+	tris = orig_tris.copy()
 	seed_point = None
 	regions.append(current_region)
 	draw()
@@ -205,13 +254,15 @@ def optim():
 
 def onmousepress(event):
 	global A, b, C, d
-	global seed_point
+	global seed_point, tris, orig_tris
 	if event.inaxes:
 		seed_point = np.array([event.xdata, event.ydata])
+		gen_boundaries(seed_point)
 		optim()
 		draw()
 
-tris = gen_obstacles()
+orig_tris = gen_obstacles()
+tris = orig_tris.copy()
 
 fig, ax = plt.subplots()
 fig.canvas.mpl_connect("button_press_event", onmousepress)
