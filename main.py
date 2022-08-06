@@ -24,7 +24,7 @@ current_region = []
 
 def gen_obstacles():
 	n_points = 200
-	alpha = 25.
+	alpha = 40.
 
 	points = np.random.random(size=(n_points, 2))
 	gen = alphashape.alphasimplices(points)
@@ -39,10 +39,10 @@ def gen_obstacles():
 		tris.append(tris[i] + np.array([-1, 0]))
 		tris.append(tris[i] + np.array([0, 1]))
 		tris.append(tris[i] + np.array([0, -1]))
-		# tris.append(tris[i] + np.array([1, 1]))
-		# tris.append(tris[i] + np.array([1, -1]))
-		# tris.append(tris[i] + np.array([-1, 1]))
-		# tris.append(tris[i] + np.array([-1, -1]))
+		tris.append(tris[i] + np.array([1, 1]))
+		tris.append(tris[i] + np.array([1, -1]))
+		tris.append(tris[i] + np.array([-1, 1]))
+		tris.append(tris[i] + np.array([-1, -1]))
 
 	return tris
 
@@ -69,7 +69,11 @@ def draw_ellipse(C, d):
 		np.array([1, 0]),
 		np.array([-1, 0]),
 		np.array([0, -1]),
-		np.array([0, 1])
+		np.array([0, 1]),
+		np.array([1, 1]),
+		np.array([1, -1]),
+		np.array([-1, 1]),
+		np.array([-1, -1])
 	]
 	for arr in arrs:
 		ax.plot(*(points + arr.reshape(-1, 1)), color="blue")
@@ -88,7 +92,11 @@ def draw_intersection(A, b, d):
 		np.array([1, 0]),
 		np.array([-1, 0]),
 		np.array([0, -1]),
-		np.array([0, 1])
+		np.array([0, 1]),
+		np.array([1, 1]),
+		np.array([1, -1]),
+		np.array([-1, 1]),
+		np.array([-1, -1])
 	]
 	for arr in arrs:
 		ax.add_patch(Polygon(current_region + arr, color="blue", alpha=0.25))
@@ -120,19 +128,23 @@ def draw():
 			# ax.plot(xx, yy, color="blue")
 		draw_intersection(A, b, ds[-1])
 	for idx, region in enumerate(regions):
-		color = plt.get_cmap("Dark2")(float(idx) / 8.)
+		color = plt.get_cmap("Set3")(float(idx) / 12.)
 		arrs = [
 			np.array([0, 0]),
 			np.array([1, 0]),
 			np.array([-1, 0]),
 			np.array([0, -1]),
-			np.array([0, 1])
+			np.array([0, 1]),
+			np.array([1, 1]),
+			np.array([1, -1]),
+			np.array([-1, 1]),
+			np.array([-1, -1])
 		]
 		for arr in arrs:
 			temp = region + arr
-			plt.plot(temp[:,0], temp[:,1], color=color, alpha=0.5)
-			plt.plot(temp[[0,-1],0], temp[[0,-1],1], color=color, alpha=0.5)
-			ax.add_patch(Polygon(temp, color=color, alpha=0.25))
+			plt.plot(temp[:,0], temp[:,1], color=color, alpha=0.75)
+			plt.plot(temp[[0,-1],0], temp[[0,-1],1], color=color, alpha=0.75)
+			ax.add_patch(Polygon(temp, color=color, alpha=0.75))
 	plt.draw()
 
 def SeparatingHyperplanes(C, d, O):
