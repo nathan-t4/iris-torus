@@ -6,7 +6,7 @@ import alphashape
 import cvxpy as cp
 from scipy.spatial import HalfspaceIntersection
 
-np.random.seed(0)
+# np.random.seed(0)
 
 seed_point = None
 As = []
@@ -21,6 +21,8 @@ cvx_range = 0.25
 
 regions = []
 current_region = []
+
+always_contain_seed_point = True
 
 def gen_obstacles():
 	n_points = 80
@@ -233,6 +235,10 @@ def optim():
 		print("Iteration %d" % iters)
 
 		A, b = SeparatingHyperplanes(Cs[-1], ds[-1], O.copy())
+		if always_contain_seed_point and np.any(A.T @ seed_point >= b.flatten()):
+			print("Terminating early to keep seed point in region.")
+			break
+
 		As.append(A)
 		bs.append(b)
 
