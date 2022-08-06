@@ -109,8 +109,8 @@ def draw():
 	ax.set_aspect("equal")
 	for tri in orig_tris:
 		ax.add_patch(Polygon(tri, color="red"))
-	for i in range(-1, -5, -1):
-		ax.add_patch(Polygon(tris[i], color="red", alpha=0.25))
+	# for i in range(-1, -5, -1):
+	# 	ax.add_patch(Polygon(tris[i], color="red", alpha=0.25))
 	if not (seed_point is None):
 		ax.scatter([seed_point[0]], [seed_point[1]])
 	if len(Cs) > 0:
