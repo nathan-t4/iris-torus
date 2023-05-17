@@ -24,6 +24,9 @@ current_region = []
 
 always_contain_seed_point = True
 
+save_images = False
+fig_count = 0
+
 def gen_obstacles():
 	n_points = 80
 	alpha = 15.
@@ -148,6 +151,11 @@ def draw():
 			plt.plot(temp[[0,-1],0], temp[[0,-1],1], color=color, alpha=0.75)
 			ax.add_patch(Polygon(temp, color=color, alpha=0.75))
 	plt.draw()
+
+	if save_images:
+		global fig_count
+		plt.savefig("img_%03d.png" % fig_count)
+		fig_count += 1
 
 def SeparatingHyperplanes(C, d, O):
 	C_inv = np.linalg.inv(C)
