@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon, Ellipse
 from matplotlib.transforms import Affine2D
+from matplotlib.collections import PolyCollection
 import alphashape
 import cvxpy as cp
 from scipy.spatial import HalfspaceIntersection
@@ -16,7 +17,7 @@ bs = []
 Cs = []
 ds = []
 tolerance = 0.00001
-limits = [[0, 1], [0, 1]]
+limits = [[0, 1], [0, 1], [0, 1]]
 max_iters = 10
 
 cvx_range = 0.25
@@ -31,25 +32,34 @@ fig_count = 0
 
 def gen_obstacles():
 	n_points = 80
-	alpha = 15.
+	alpha = 10.
 
-	points = np.random.random(size=(n_points, 2))
+	points = np.random.random(size=(n_points, 3))
 	gen = alphashape.alphasimplices(points)
+
+	# print(*zip(*gen.vertices))
 
 	tris = []
 	for simplex, r in gen:
+		print(simplex, r, 1/alpha)
 		if r < 1/alpha:
 			tris.append(points[simplex])
 
 	for i in range(len(tris)):
-		tris.append(tris[i] + np.array([1, 0]))
-		tris.append(tris[i] + np.array([-1, 0]))
-		tris.append(tris[i] + np.array([0, 1]))
-		tris.append(tris[i] + np.array([0, -1]))
-		tris.append(tris[i] + np.array([1, 1]))
-		tris.append(tris[i] + np.array([1, -1]))
-		tris.append(tris[i] + np.array([-1, 1]))
-		tris.append(tris[i] + np.array([-1, -1]))
+		tris.append(tris[i] + np.array([1, 0, 0]))
+		tris.append(tris[i] + np.array([-1, 0, 0]))
+		tris.append(tris[i] + np.array([0, 1, 0]))
+		tris.append(tris[i] + np.array([0, -1, 0]))
+		tris.append(tris[i] + np.array([0, 0, 1]))
+		tris.append(tris[i] + np.array([0, 0, -1]))
+		tris.append(tris[i] + np.array([1, 1, 1]))
+		tris.append(tris[i] + np.array([1, -1, 1]))
+		tris.append(tris[i] + np.array([-1, 1, 1]))
+		tris.append(tris[i] + np.array([-1, -1, 1]))
+		tris.append(tris[i] + np.array([1, 1, -1]))
+		tris.append(tris[i] + np.array([1, -1, -1]))
+		tris.append(tris[i] + np.array([-1, 1, -1]))
+		tris.append(tris[i] + np.array([-1, -1, -1]))
 
 	return tris
 
@@ -113,51 +123,54 @@ def draw():
 	ax.cla()
 	ax.set_xlim(limits[0])
 	ax.set_ylim(limits[1])
-	ax.set_aspect("equal")
+	ax.set_zlim(limits[2])
+	# ax.set_aspect("equal")
 	for tri in orig_tris:
-		ax.add_patch(Polygon(tri, color="red"))
-	# for i in range(-1, -5, -1):
-	# 	ax.add_patch(Polygon(tris[i], color="red", alpha=0.25))
-	if not (seed_point is None):
-		ax.scatter([seed_point[0]], [seed_point[1]])
-	if len(Cs) > 0:
-		C = Cs[-1]
-		d = ds[-1]
-		draw_ellipse(C, d)
-	if len(As) > 0:
-		A = As[-1]
-		b = bs[-1]
-		for i in range(len(b)):
-			w = A[:,i]
-			intercept = b[i]
-			xx = np.linspace(*limits[0])
-			yy = (-w[0] / w[1]) * xx + (intercept / w[1])
-			# ax.plot(xx, yy, color="blue")
-		draw_intersection(A, b, ds[-1])
-	for idx, region in enumerate(regions):
-		color = plt.get_cmap("Set3")(float(idx) / 12.)
-		arrs = [
-			np.array([0, 0]),
-			np.array([1, 0]),
-			np.array([-1, 0]),
-			np.array([0, -1]),
-			np.array([0, 1]),
-			np.array([1, 1]),
-			np.array([1, -1]),
-			np.array([-1, 1]),
-			np.array([-1, -1])
-		]
-		for arr in arrs:
-			temp = region + arr
-			plt.plot(temp[:,0], temp[:,1], color=color, alpha=0.75)
-			plt.plot(temp[[0,-1],0], temp[[0,-1],1], color=color, alpha=0.75)
-			ax.add_patch(Polygon(temp, color=color, alpha=0.75))
-	plt.draw()
+		# ax.add_patch(Polygon(tri, color="red"))
+		ax.plot_trisurf(*tri)
 
-	if save_images:
-		global fig_count
-		plt.savefig("img_%03d.png" % fig_count)
-		fig_count += 1
+	# # for i in range(-1, -5, -1):
+	# # 	ax.add_patch(Polygon(tris[i], color="red", alpha=0.25))
+	# if not (seed_point is None):
+	# 	ax.scatter([seed_point[0]], [seed_point[1]])
+	# if len(Cs) > 0:
+	# 	C = Cs[-1]
+	# 	d = ds[-1]
+	# 	draw_ellipse(C, d)
+	# if len(As) > 0:
+	# 	A = As[-1]
+	# 	b = bs[-1]
+	# 	for i in range(len(b)):
+	# 		w = A[:,i]
+	# 		intercept = b[i]
+	# 		xx = np.linspace(*limits[0])
+	# 		yy = (-w[0] / w[1]) * xx + (intercept / w[1])
+	# 		# ax.plot(xx, yy, color="blue")
+	# 	draw_intersection(A, b, ds[-1])
+	# for idx, region in enumerate(regions):
+	# 	color = plt.get_cmap("Set3")(float(idx) / 12.)
+	# 	arrs = [
+	# 		np.array([0, 0]),
+	# 		np.array([1, 0]),
+	# 		np.array([-1, 0]),
+	# 		np.array([0, -1]),
+	# 		np.array([0, 1]),
+	# 		np.array([1, 1]),
+	# 		np.array([1, -1]),
+	# 		np.array([-1, 1]),
+	# 		np.array([-1, -1])
+	# 	]
+	# 	for arr in arrs:
+	# 		temp = region + arr
+	# 		plt.plot(temp[:,0], temp[:,1], color=color, alpha=0.75)
+	# 		plt.plot(temp[[0,-1],0], temp[[0,-1],1], color=color, alpha=0.75)
+	# 		ax.add_patch(Polygon(temp, color=color, alpha=0.75))
+	# plt.draw()
+
+	# if save_images:
+	# 	global fig_count
+	# 	plt.savefig("img_%03d.png" % fig_count)
+	# 	fig_count += 1
 
 
 	# n = 2
@@ -241,7 +254,9 @@ def onmousepress(event):
 orig_tris = gen_obstacles()
 tris = orig_tris.copy()
 
-fig, ax = plt.subplots()
-fig.canvas.mpl_connect("button_press_event", onmousepress)
+print(tris)
+
+ax = plt.figure().add_subplot(projection="3d")
+# fig.canvas.mpl_connect("button_press_event", onmousepress)
 draw()
 plt.show()
